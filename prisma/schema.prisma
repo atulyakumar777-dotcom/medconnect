@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         String        @default("PATIENT") // PATIENT, DOCTOR, ADMIN
+  image        String?
+  phone        String?
+  dob          String?
+  gender       String?
+  address      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  doctor       Doctor?
+  appointments Appointment[] @relation("PatientAppointments")
+}
+
+model Doctor {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id])
+  specialty    String
+  degree       String
+  experience   Int
+  about        String
+  fees         Float
+  available    Boolean       @default(true)
+  addressLine  String?
+  slots        Slot[]
+  appointments Appointment[] @relation("DoctorAppointments")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Slot {
+  id        String @id @default(cuid())
+  doctorId  String
+  doctor    Doctor @relation(fields: [doctorId], references: [id])
+  day       String // MON, TUE, WED, THU, FRI, SAT, SUN
+  startTime String // "09:00"
+  endTime   String // "09:30"
+}
+
+model Appointment {
+  id            String   @id @default(cuid())
+  patientId     String
+  patient       User     @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctorId      String
+  doctor        Doctor   @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  slotDate      String   // "2024-01-15"
+  slotTime      String   // "09:00"
+  status        String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+  paymentMethod String   @default("CASH") // CASH, ONLINE
+  paymentStatus String   @default("PENDING") // PENDING, PAID
+  amount        Float
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
